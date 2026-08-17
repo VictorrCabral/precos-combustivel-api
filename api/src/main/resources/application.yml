@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: precos-api
+
+  datasource:
+    # Em producao (Railway/Render) basta definir a variavel DATABASE_URL.
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/precos}
+    username: ${DB_USER:precos}
+    password: ${DB_PASSWORD:precos}
+
+  jpa:
+    hibernate:
+      # O esquema vem do db/init.sql. O Hibernate nao cria nem altera tabela:
+      # em API publica, deixar o ORM mexer no banco em producao e pedir problema.
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: America/Sao_Paulo
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=6h
+
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preços de Combustíveis — consulta</title>
+<style>
+  :root { --bg:#faf9f7; --card:#fff; --ink:#161616; --muted:#6b6b6b;
+          --line:#e5e2dd; --accent:#1f3864; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --card:#1d2025; --ink:#eceff3; --muted:#9aa1ab;
+            --line:#2c3138; --accent:#8fb4ea; }
+  }
+  * { box-sizing: border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); min-height:100vh;
+         font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         display:flex; align-items:center; justify-content:center; padding:24px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+          padding:28px; width:100%; max-width:520px }
+  h1 { font-size:20px; margin:0 0 4px }
+  p.sub { color:var(--muted); font-size:14px; margin:0 0 22px }
+  form { display:grid; grid-template-columns:80px 1fr; gap:10px }
+  label { grid-column:1/-1; font-size:13px; color:var(--muted); margin-top:6px }
+  input, select, button { font:inherit; padding:10px 12px; border-radius:8px;
+          border:1px solid var(--line); background:var(--bg); color:var(--ink) }
+  button { grid-column:1/-1; margin-top:14px; background:var(--accent); color:#fff;
+           border:none; cursor:pointer; font-weight:600 }
+  button:disabled { opacity:.6; cursor:default }
+  .resultado { margin-top:22px; padding-top:18px; border-top:1px solid var(--line); display:none }
+  .preco { font-size:38px; font-weight:700; letter-spacing:-.5px }
+  .linha { display:flex; justify-content:space-between; font-size:14px;
+           color:var(--muted); padding:4px 0 }
+  .erro { color:#b4443a; font-size:14px; margin-top:18px; display:none }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Preços de combustíveis</h1>
+  <p class="sub">Dados do levantamento semanal da ANP</p>
+
+  <form id="f">
+    <label for="uf">UF e município</label>
+    <input id="uf" value="AM" maxlength="2" required>
+    <input id="municipio" value="Manaus" required>
+
+    <label for="produto">Combustível</label>
+    <select id="produto" style="grid-column:1/-1">
+      <option value="gasolina">Gasolina</option>
+      <option value="etanol">Etanol</option>
+      <option value="diesel">Diesel</option>
+      <option value="glp">GLP</option>
+    </select>
+
+    <button type="submit">Consultar</button>
+  </form>
+
+  <div class="resultado" id="r">
+    <div class="preco" id="medio"></div>
+    <div class="linha"><span>Menor preço</span><strong id="min"></strong></div>
+    <div class="linha"><span>Maior preço</span><strong id="max"></strong></div>
+    <div class="linha"><span>Postos pesquisados</span><strong id="postos"></strong></div>
+    <div class="linha"><span>Semana</span><strong id="semana"></strong></div>
+  </div>
+
+  <div class="erro" id="e"></div>
+</div>
+
+<script>
+  // Troque quando publicar a API
+  const API = "http://localhost:8080";
+
+  const brl = v => Number(v).toLocaleString("pt-BR",
+      { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+  const dia = d => new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+
+  document.getElementById("f").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const btn = ev.target.querySelector("button");
+    const res = document.getElementById("r");
+    const err = document.getElementById("e");
+    btn.disabled = true; err.style.display = "none";
+
+    const params = new URLSearchParams({
+      uf: document.getElementById("uf").value,
+      municipio: document.getElementById("municipio").value,
+      produto: document.getElementById("produto").value
+    });
+
+    try {
+      const resposta = await fetch(`${API}/v1/precos?${params}`);
+      if (!resposta.ok) {
+        const corpo = await resposta.json().catch(() => ({}));
+        throw new Error(corpo.erro || `Erro ${resposta.status}`);
+      }
+      const d = await resposta.json();
+      document.getElementById("medio").textContent = brl(d.precoMedio);
+      document.getElementById("min").textContent = brl(d.precoMinimo);
+      document.getElementById("max").textContent = brl(d.precoMaximo);
+      document.getElementById("postos").textContent = d.postosPesquisados;
+      document.getElementById("semana").textContent =
+          `${dia(d.semanaInicio)} a ${dia(d.semanaFim)}`;
+      res.style.display = "block";
+    } catch (problema) {
+      res.style.display = "none";
+      err.textContent = problema.message;
+      err.style.display = "block";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

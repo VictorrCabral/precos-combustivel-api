@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: precos-db
+    environment:
+      POSTGRES_DB: precos
+      POSTGRES_USER: precos
+      POSTGRES_PASSWORD: precos
+    ports:
+      - "5432:5432"
+    volumes:
+      - precos-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U precos -d precos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  precos-data:

@@ -1,0 +1,22 @@
+# Java
+target/
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# dados baixados da ANP (nao versionar arquivo grande)
+dados/
+*.csv
+
+# ambiente
+.env
+.idea/
+.vscode/
+
+.fake
