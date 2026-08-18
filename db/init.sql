@@ -1,7 +1,3 @@
--- Esquema do banco. Executado automaticamente pelo Postgres do docker-compose
--- na primeira subida (tudo em /docker-entrypoint-initdb.d roda uma vez).
-
--- Dado bruto: uma linha por posto pesquisado pela ANP, por semana.
 CREATE TABLE IF NOT EXISTS preco_coleta (
     id              BIGSERIAL PRIMARY KEY,
     data_coleta     DATE         NOT NULL,
@@ -17,14 +13,12 @@ CREATE TABLE IF NOT EXISTS preco_coleta (
     criado_em       TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
--- Evita inserir duas vezes a mesma coleta ao reprocessar o mesmo arquivo.
 CREATE UNIQUE INDEX IF NOT EXISTS ux_preco_coleta_dedup
     ON preco_coleta (data_coleta, cnpj_revenda, produto, valor_venda);
 
 CREATE INDEX IF NOT EXISTS ix_preco_coleta_busca
     ON preco_coleta (uf, municipio, produto, data_coleta DESC);
 
--- Agregado semanal: é isso que a API lê. Consulta rápida, sem varrer o bruto.
 CREATE TABLE IF NOT EXISTS resumo_semanal (
     id                 BIGSERIAL PRIMARY KEY,
     semana_inicio      DATE         NOT NULL,
