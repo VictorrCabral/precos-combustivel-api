@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from loader import (  # noqa: E402
     chave_coluna,
+    normalizar_uf,
     mapear_colunas,
     normalizar_municipio,
     para_decimal,
@@ -90,3 +91,34 @@ def test_localizar_cabecalho_quando_ja_e_a_primeira_linha():
     ])
     from loader import localizar_cabecalho
     assert localizar_cabecalho(previa) == 0
+
+
+def test_mapear_colunas_do_arquivo_semanal_de_revendas():
+    """O arquivo semanal usa outros nomes que a serie historica."""
+    df = pd.DataFrame(columns=[
+        "CNPJ", "RAZÃO", "FANTASIA", "ENDEREÇO", "NÚMERO", "COMPLEMENTO",
+        "BAIRRO", "CEP", "MUNICÍPIO", "ESTADO", "BANDEIRA", "PRODUTO",
+        "UNIDADE DE MEDIDA", "PREÇO DE REVENDA", "DATA DA COLETA",
+    ])
+    mapa = mapear_colunas(df)
+    assert mapa["valor_venda"] == "PREÇO DE REVENDA"
+    assert mapa["uf"] == "ESTADO"
+    assert mapa["municipio"] == "MUNICÍPIO"
+    assert mapa["cnpj_revenda"] == "CNPJ"
+
+
+@pytest.mark.parametrize(
+    "entrada,esperado",
+    [
+        ("AM", "AM"),
+        ("am", "AM"),
+        ("Amazonas", "AM"),
+        ("SÃO PAULO", "SP"),
+        ("Rio Grande do Sul", "RS"),
+        ("PAIS INEXISTENTE", None),
+        (None, None),
+    ],
+)
+def test_normalizar_uf(entrada, esperado):
+    from loader import normalizar_uf
+    assert normalizar_uf(entrada) == esperado

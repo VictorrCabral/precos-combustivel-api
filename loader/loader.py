@@ -72,18 +72,45 @@ def normalizar_municipio(nome: str) -> str:
 # --------------------------------------------------------------------------- #
 
 # nome logico -> possiveis nomes no arquivo da ANP (comparados sem acento/caixa)
+# A ANP publica dois formatos com nomes de coluna diferentes:
+# a serie historica ("Valor de Venda", "Estado - Sigla") e o arquivo semanal
+# de revendas ("PRECO DE REVENDA", "ESTADO"). Aceitamos os dois.
 COLUNAS = {
     "regiao":         ["regiao sigla", "regiao"],
     "uf":             ["estado sigla", "uf", "estado"],
     "municipio":      ["municipio"],
-    "revenda":        ["revenda"],
-    "cnpj_revenda":   ["cnpj da revenda", "cnpj revenda"],
+    "revenda":        ["revenda", "razao", "razao social", "fantasia"],
+    "cnpj_revenda":   ["cnpj da revenda", "cnpj revenda", "cnpj"],
     "produto":        ["produto"],
     "data_coleta":    ["data da coleta", "data coleta"],
-    "valor_venda":    ["valor de venda", "valor venda"],
+    "valor_venda":    ["valor de venda", "valor venda", "preco de revenda",
+                       "preco de venda", "preco revenda"],
     "unidade_medida": ["unidade de medida", "unidade medida"],
     "bandeira":       ["bandeira"],
 }
+
+# O arquivo semanal traz o estado por extenso; o banco guarda a sigla.
+UFS = {
+    "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM",
+    "BAHIA": "BA", "CEARA": "CE", "DISTRITO FEDERAL": "DF",
+    "ESPIRITO SANTO": "ES", "GOIAS": "GO", "MARANHAO": "MA",
+    "MATO GROSSO": "MT", "MATO GROSSO DO SUL": "MS", "MINAS GERAIS": "MG",
+    "PARA": "PA", "PARAIBA": "PB", "PARANA": "PR", "PERNAMBUCO": "PE",
+    "PIAUI": "PI", "RIO DE JANEIRO": "RJ", "RIO GRANDE DO NORTE": "RN",
+    "RIO GRANDE DO SUL": "RS", "RONDONIA": "RO", "RORAIMA": "RR",
+    "SANTA CATARINA": "SC", "SAO PAULO": "SP", "SERGIPE": "SE",
+    "TOCANTINS": "TO",
+}
+
+
+def normalizar_uf(valor) -> str | None:
+    """'AM' -> 'AM' ; 'Amazonas' -> 'AM' ; desconhecido -> None."""
+    if valor is None:
+        return None
+    texto = sem_acento(str(valor)).upper().strip()
+    if len(texto) == 2:
+        return texto
+    return UFS.get(texto)
 
 
 def mapear_colunas(df: pd.DataFrame) -> dict[str, str]:
@@ -186,13 +213,13 @@ def preparar(df: pd.DataFrame) -> pd.DataFrame:
     saida["valor_venda"] = saida["valor_venda"].map(para_decimal)
     saida["municipio"] = saida["municipio"].map(normalizar_municipio)
     saida["produto"] = saida["produto"].map(lambda p: sem_acento(p).upper().strip())
-    saida["uf"] = saida["uf"].str.strip().str.upper()
+    saida["uf"] = saida["uf"].map(normalizar_uf)
     saida["data_coleta"] = pd.to_datetime(
         saida["data_coleta"], dayfirst=True, errors="coerce"
     ).dt.date
 
     antes = len(saida)
-    saida = saida.dropna(subset=["valor_venda", "data_coleta", "municipio", "produto"])
+    saida = saida.dropna(subset=["valor_venda", "data_coleta", "municipio", "produto", "uf"])
     print(f"{antes - len(saida)} linhas descartadas por dado invalido")
     return saida
 

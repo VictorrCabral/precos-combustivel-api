@@ -1,5 +1,0 @@
-pandas>=2.2
-openpyxl>=3.1
-psycopg[binary]>=3.2
-requests>=2.32
-pytest>=8.0
