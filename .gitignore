@@ -20,3 +20,4 @@ dados/
 .vscode/
 
 .fake
+*.zip
