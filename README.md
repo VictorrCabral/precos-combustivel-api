@@ -3,7 +3,10 @@
 API pública e gratuita com o preço médio dos combustíveis por município brasileiro,
 construída sobre o levantamento semanal da ANP.
 
-> **Status:** em construção. Etapa 1 de 3.
+> **Status:** funcionando localmente. Deploy público em andamento — veja [DEPLOY.md](DEPLOY.md).
+>
+> Quando publicado em plano gratuito, a primeira chamada após um período de
+> inatividade pode levar até 1 minuto para responder.
 
 ## O problema
 
@@ -136,7 +139,7 @@ repositório: o *secret* `DATABASE_URL` e a *variable* `ANP_CSV_URL`.
 
 - [x] Esquema do banco e carregador com testes
 - [x] Endpoints de preço atual, histórico, municípios e produtos
-- [ ] Deploy público com banco gerenciado
+- [ ] Deploy público com banco gerenciado (guia pronto em DEPLOY.md)
 - [x] Saída em texto puro para terminal, com mini gráfico
 - [ ] Página com gráfico de evolução do preço
 - [ ] Limite de requisições por IP
